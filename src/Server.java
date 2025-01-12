@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.ServerSocket;
 
 public class Server {
-    public static final int PORT = 1234;
+    public static final int PORT = 8000;
 
     public static void main(String[] args) throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
