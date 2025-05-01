@@ -1,9 +1,18 @@
+package org.ici;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ici.exceptions.ClientNotHandledException;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ClientHandler implements Runnable {
+
+    private static final Logger logger = LogManager.getLogger(ClientHandler.class);
+
     private static final List<ClientHandler> CLIENTS = new ArrayList<>();
     private final Socket socket;
     private final String clientIpAddress;
@@ -12,7 +21,7 @@ public class ClientHandler implements Runnable {
     private final BufferedReader bufferedReader;
     private final PrintWriter printWriter;
 
-    public ClientHandler(Socket socket) {
+    public ClientHandler(Socket socket) throws ClientNotHandledException {
         this.socket = socket;
         this.clientIpAddress = socket.getInetAddress().getHostAddress();
         this.clientPort = socket.getPort();
@@ -21,9 +30,10 @@ public class ClientHandler implements Runnable {
             this.printWriter = new PrintWriter(socket.getOutputStream(), true);
             this.name = this.bufferedReader.readLine();
         } catch (IOException e) {
-            System.err.println("Failed to handle a new Client!");
+            String error = String.format("Failed to handle a new Client with ip: %s and port: %s", this.clientIpAddress, this.clientPort);
+            logger.error(error);
             closeResources();
-            throw new RuntimeException(e);
+            throw new ClientNotHandledException(error);
         }
         CLIENTS.add(this);
     }
@@ -41,7 +51,7 @@ public class ClientHandler implements Runnable {
                 this.bufferedReader.close();
             }
         } catch (IOException e) {
-            System.err.println("Could not close resources");
+            logger.error("Could not close resources");
         }
     }
 
@@ -54,14 +64,14 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            System.out.printf("%s:%d:%s -> Joined the chat!%n", this.clientIpAddress, this.clientPort, this.name);
+            logger.info("{}:{}:{} -> Joined the chat!", this.clientIpAddress, this.clientPort, this.name);
             broadcast(this.clientIpAddress + ":" + this.clientPort + ":" + this.name + " -> Joined the chat, say hello!");
 
             String receivedMessage;
 
             while((receivedMessage = this.bufferedReader.readLine()) != null) {
 
-                System.out.printf("Client(%s:%d:%s): %s%n", this.clientIpAddress, this.clientPort, this.name, receivedMessage);
+                logger.info("Client({}:{}:{}): {}", this.clientIpAddress, this.clientPort, this.name, receivedMessage);
 
 
                 if (receivedMessage.contains("->quit")) {
@@ -81,14 +91,14 @@ public class ClientHandler implements Runnable {
             }
 
         } catch (IOException e) {
-            System.err.println("Client Socket closed");
+            logger.error("Client Socket closed");
         } finally {
             closeResources();
         }
     }
 
     private void broadcast(final String msg) {
-        System.out.println("Broadcasting");
+        logger.info("Broadcasting");
         CLIENTS.stream().filter(client -> client.clientPort != this.clientPort)
                 .forEach(clientHandler -> clientHandler.sendMessage(msg));
     }
