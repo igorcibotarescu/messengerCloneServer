@@ -24,4 +24,4 @@ mvn clean package
 java -jar x.jar yourPort
 
 #Note
-If the port passed as argument is busy the app will automatically assing a free one.
+If the port passed as argument is busy the app will automatically assign a free one.
