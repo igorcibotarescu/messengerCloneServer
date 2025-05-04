@@ -21,4 +21,7 @@ A simple Java websocket server application. This project uses Maven for build ma
 git clone https://github.com/yourusername/MessengerCloneClient.git
 cd MessengerCloneClient
 mvn clean package
-java -jar x.jar youPort
+java -jar x.jar yourPort
+
+#Note
+If the port passed as argument is busy the app will automatically assing a free one.
